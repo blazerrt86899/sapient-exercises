@@ -1,0 +1,21 @@
+---
+#Ansible playbook starts with three dashes
+-
+## This minus in yaml indicates list of items
+  hosts: client
+  vars: 
+    motd_redhat: "Welcome to the ansible playbook - Redhat Linux"
+    motd_ubuntu: "Welcome to the ansible palybook - Ubuntu Linux"
+  
+
+  tasks:
+    - name: configure a  motd message of the day in Redhat
+      copy:
+        content: "{{motd_redhat}}"
+        dest: /etc/motd
+      when: ansible_distribution == "RedHat"
+    - name: configure a motd message of the day in Linux
+      copy:
+        content: "{{motd_ubuntu}}"
+        dest: /etc/motd
+      when: ansible_distribution == "Ubuntu"

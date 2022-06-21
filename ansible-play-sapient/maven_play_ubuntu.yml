@@ -1,0 +1,13 @@
+---
+#Ansible playbook starts with three dashes
+## This minus in yaml indicates list of items
+- hosts: client1
+  tasks:
+    - name: Install maven on ubuntu using ansible
+      become: yes
+      apt:
+        name: "{{ packages }}"
+        state: present
+      vars:
+        packages:
+          - maven

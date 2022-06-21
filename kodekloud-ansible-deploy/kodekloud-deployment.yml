@@ -1,0 +1,93 @@
+---
+- name: Deploy Kodekloud application on PHP server which uses MariaDB Database
+  hosts: client1
+  vars:
+
+  tasks:
+    - name: Install firewalld on CentOS System
+      yum:
+        name: firewalld
+        state: latest
+    - name: Starting firewalld service
+      service:
+        name: firewalld
+        state: started
+        enabled: yes
+      become: yes
+    - name: Install Mariadb server
+      yum:
+        name: mariadb-server
+        state: present
+    - name: Start Mariadb service
+      service:
+        name: mariadb
+        state: started
+        enabled: yes
+    - name: Enable port 3306/tcp on firewalld
+      firewalld:
+        zone: public
+        port: 3306/tcp
+        permanent: true
+        state: enabled
+      become: yes
+    - name: Reload firewalld service
+      systemd:
+        name: firewalld
+        state: reloaded
+    - name: Create new database in mysql
+      mysql_db: name=ecomdb state=present
+    - name: Create database user with name 'Romu' and password and grant privileges
+      community.mysql.mysql_user:
+        name: romu
+        password: root
+        priv: '*.*:ALL,GRANT'
+        state: present
+    - name: Flush privileges
+      community.mysql.mysql_query:
+        login_db: ecomdb
+        query: FLUSH PRIVILEGES
+    - name: Run db scripts to create table and enter data in it
+      community.mysql.mysql_query:
+        login_db: ecomdb
+        query:
+        - CREATE TABLE products (id mediumint(8) unsigned NOT NULL auto_increment,Name varchar(255) default NULL,Price varchar(255) default NULL, ImageUrl varchar(255) default NULL,PRIMARY KEY (id)) AUTO_INCREMENT=1
+        - INSERT INTO products (Name,Price,ImageUrl) VALUES ("Laptop","100","c-1.png"),("Drone","200","c-2.png"),("VR","300","c-3.png"),("Tablet","50","c-5.png"),("Watch","90","c-6.png"),("Phone Covers","20","c-7.png"),("Phone","80","c-8.png"),("Laptop","150","c-4.png")
+        - EOF
+    - name: Configure web and deploy app
+      yum:
+        name: httpd php php-mysql
+        state: latest
+    - name: Add port 80/tcp to firewalld
+      firewalld:
+        zone: public
+        port: 80/tcp
+        permanent: yes
+        state: enabled
+    - name: Reload firewalld service
+      systemd:
+        name: firewalld
+        state: reloaded
+    - name: Move index.html to index.php
+      shell: sed -i 's/index.html/index.php/g' /etc/httpd/conf/httpd.conf
+    - name: Restart httpd service
+      service: name=httpd state=restarted
+    - name: Enable httpd service
+      service:
+        name: httpd
+        enabled: yes
+    - name: Install Git
+      yum:
+        name: git
+        state: latest
+    - name: Clone the git repository
+      git:
+        repo: https://github.com/kodekloudhub/learning-app-ecommerce.git
+        dest: /var/www/html/
+        single_branch: yes
+        version: master
+    - name: Update the index.php page with server index.php
+      shell: sed -i 's/172.20.1.101/localhost/g' /var/www/html/index.php
+    - name: Checking localhost
+      shell: curl http://localhost
+    
+    

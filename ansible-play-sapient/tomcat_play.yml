@@ -1,0 +1,58 @@
+---
+- name: Install Apache Tomcat on Ubuntu using Ansible
+  hosts: client1
+  vars:
+    tomcat_download_url: https://dlcdn.apache.org/tomcat/tomcat-10/v10.0.22/bin/apache-tomcat-10.0.22.tar.gz
+    tomcat_download_location: /opt/tomcat10/
+  tasks:
+    - name: Update the system packages
+      apt:
+        upgrade: yes
+        update_cache: yes
+
+    - name: Create a tomcat user
+      user:
+        name: tomcat
+    - name: Create a tomcat group
+      group:
+        name: tomcat
+    - name: Install Java JDK
+      apt:
+        name: openjdk-11-jdk-headless
+        state: present
+    - name: Create a tomcat directory
+      file:
+        path: "{{tomcat_download_location}}"
+        owner: tomcat
+        group: tomcat
+        mode: 755
+        recurse: yes
+    - name: Download and unarchive tomcat10
+      unarchive:
+        src: "{{tomcat_download_url}}"
+        dest: "{{tomcat_download_location}}"
+        remote_src: yes
+        extra_opts: [--strip-components=1]
+    - name: Change ownership of tomcat directory
+      file:
+        path: "{{tomcat_download_location}}"
+        owner: tomcat
+        group: tomcat
+        mode: "u+rwx,g+rx,o=rx"
+        recurse: yes
+        state: directory
+
+    - name: copy tomcat conf
+      template:
+        src: templates/tomcat.service.j2
+        dest: /etc/systemd/system/tomcat.service
+        mode: 0644
+
+    - name: Starting Apache Tomcat service
+      service:
+        name: tomcat
+        state: started
+        enabled: yes
+        daemon_reload: yes
+      when: ansible_service_mgr == "systemd"
+    

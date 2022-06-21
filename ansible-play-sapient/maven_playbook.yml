@@ -1,0 +1,73 @@
+---
+#Ansible playbook starts with three dashes
+-
+## This minus in yaml indicates list of items
+  hosts: client,client1
+  vars: 
+    motd_redhat: "Welcome to the ansible playbook - Redhat Linux"
+    motd_ubuntu: "Welcome to the ansible palybook - Ubuntu Linux"
+  
+  tasks:
+    - name: Install OpenJDK 11
+      yum:
+        name: java-11-openjdk
+        update_cache: yes
+        state: latest
+      when: ansible_distribution == "RedHat"
+
+    - name: Get maven tar file and download at /opt
+      get_url:
+        url: https://www-us.apache.org/dist/maven/maven-3/3.8.5/binaries/apache-maven-3.8.5-bin.tar.gz
+        dest: /opt/
+      when: ansible_distribution == "RedHat"
+    
+    - name: Untar the zip file downloaded
+      ansible.builtin.unarchive:
+        src: /opt/
+        dest: /opt/
+        remote_src: yes
+      when: ansible_distribution == "RedHat"
+    
+    - name: Create symbolic link for maven
+      file:
+        src: /opt/apache-maven-3.8.5 maven
+        dest: /opt/maven
+        state: link
+      when: ansible_distribution == "RedHat"
+    - name: Create maven.sh
+      file:
+        path: /etc/profile.d/maven.sh
+        state: touch
+        mode: 777
+      when: ansible_distribution == "RedHat"
+    - name: Creating source file for maven.sh
+      lineinfile:
+        path: /etc/profile.d/maven.sh
+        state: present
+        line: "{{ item }}"
+      with_items:
+      - 'export M2_HOME=/opt/maven'
+      - 'export PATH=${M2_HOME}/bin:${PATH}'
+      when: ansible_distribution == "RedHat"
+
+    - name: Sourcing maven.sh
+      shell: "source /etc/profile.d/maven.sh && echo $variable_in_profile"
+      tags: mvn
+      when: ansible_distribution ==  "RedHat"
+    
+    - name: Print maven version
+      shell: mvn --version
+      register: system_maven
+    
+    - name: Display Maven version
+      debug:
+        msg: "{{ system_maven }}"
+    
+    - name: Check Storage
+      shell: df h
+      register: storage_disk
+    
+    - name: Display Disk Storage Info
+      debug:
+        msg: "{{ storage_disk }}"
+
