@@ -1,0 +1,52 @@
+---
+- name: Docker Installation on RedHat Like Distribution
+  hosts: ansiclerhelclient
+  vars:
+    container_count: 3
+    default_container_name: romtiwar-sapient-rhel
+    default_container_image: blazerrt86899/romu-portfolio
+    default_container_command: sleep 1
+    mydistribution: rhel
+    docker_version: 20.10.8
+  become: true
+  tasks:
+    - name: Add RPM signing key
+      ansible.builtin.rpm_key:
+        key: "https://download.docker.com/linux/{{ mydistribution }}/gpg"
+        state: present
+
+    - name: Add repository into repo.d list
+      ansible.builtin.yum_repository:
+        name: docker
+        description: docker repository
+        baseurl: "https://download.docker.com/linux/{{ mydistribution }}/docker-ce.repo"
+        enabled: true
+        gpgcheck: true
+        gpgkey: "https://download.docker.com/linux/{{ mydistribution }}/gpg"
+
+    - name: Install Docker
+      ansible.builtin.yum:
+        name:
+          - docker-ce-{{docker_version}}
+          - docker-ce-cli-{{docker_version}}
+          - containerd.io
+          - docker-compose-plugin
+        state: latest
+        update_cache: true
+
+    - name: Start Docker
+      ansible.builtin.service:
+        name: docker
+        enabled: true
+        state: started
+    - name: download the docker image
+      docker_image:
+        name: "{{default_container_image}}"
+        source: pull
+    - name: Running the docker container
+      docker_container:
+        name: "{{default_container_name}}{{item}}"
+        image: "{{default_container_image}}"
+        command: "{{default_container_command}}"
+      with_sequence: count={{container_count}}
+      # (i=0, i<=4, i++)
