@@ -25,7 +25,10 @@ rm /etc/containerd/config.toml
 
 # Step 3: Kubernetes Installation process
 
-cat <<EOF | sudo tee /etc/modules-load.d/k8s.conf overlay br_netfilter EOF
+cat <<EOF | sudo tee /etc/modules-load.d/k8s.conf 
+overlay 
+br_netfilter 
+EOF
 
 sudo modprobe overlay
 

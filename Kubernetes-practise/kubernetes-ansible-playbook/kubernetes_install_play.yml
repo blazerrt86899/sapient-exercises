@@ -1,0 +1,80 @@
+---
+- name: Kubernetes Cluster Setup via kubeadm
+  hosts: k8snode2
+  tasks:
+    - name: apt package update
+      apt:
+        upgrade: yes
+        update_cache: yes
+    - name: install ca-certificates curl gnupg lsb-release
+      apt: name={{ item }} state=installed
+      with_items:
+        - ca-certificates
+        - curl
+        - gnupg
+        - lsb-release
+    - name: make keyrings directory
+      file:
+        path: /etc/apt/keyrings
+        state: directory
+    - name: run curl command
+      command: "{{ item }}"
+      with_items:
+        - curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+        - echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+    - name: update the system packages
+      apt:
+        upgrade: yes
+        update_cache: yes
+    - name: Install containerd.io
+      apt:
+        name: containerd.io
+        state: installed
+    - name: Check containerd status
+      systemd:
+        name: containerd
+        state: started
+    - name: Cleanup containerd temporary files
+      command: rm /etc/containerd/config.toml
+    - name: Overlay and br_netfilter
+      shell:
+        cmd: 'cat <<EOF | sudo tee /etc/modules-load.d/k8s.conf overlay br_netfilter EOF'
+    - name: Run shell commands
+      command: "{{ item }}"
+      with_items:
+        - sudo modprobe overlay
+        - sudo modprobe br_netfilter
+    - name: Net bridge and ip tables
+      shell:
+      cmd: 'cat <<EOF | sudo tee /etc/sysctl.d/k8s.conf net.bridge.bridge-nf-call-iptables  = 1 net.bridge.bridge-nf-call-ip6tables = 1 net.ipv4.ip_forward = 1 EOF'
+    - name: entries in sysctl.conf
+      command: "{{ item }}"
+      with_items:
+        - sudo sysctl --system
+        - sudo apt-get update
+    - name: Install ca-certificates apt-transport-https curl
+      apt: name={{ item }} state=installed
+      with_items:
+        - ca-certificates
+        - apt-transport-https
+        - curl
+    - name: Run Kubernetes repo verification via gpg keyrings
+      command: "{{ item }}"
+      with_items:
+        - sudo curl -fsSLo /usr/share/keyrings/kubernetes-archive-keyring.gpg https://packages.cloud.google.com/apt/doc/apt-key.gpg
+        - echo "deb [signed-by=/usr/share/keyrings/kubernetes-archive-keyring.gpg] https://apt.kubernetes.io/ kubernetes-xenial main" | sudo tee /etc/apt/sources.list.d/kubernetes.list
+        - sudo curl -fsSLo /usr/share/keyrings/kubernetes-archive-keyring.gpg https://packages.cloud.google.com/apt/doc/apt-key.gpg
+    - name: Update the system package
+      apt:
+        upgrade: yes
+        update_cache: yes
+    - name: Installing kubectl kubeadm kubelets
+      apt: name={{ item }} state=installed
+      with_items:
+        - kubelet
+        - kubeadm
+        - kubectl
+    - name: Restart containerd
+      systemd:
+        name: containerd
+        state: restarted
