@@ -1,0 +1,10 @@
+# Deployment manifest commands
+# After manifest file is written:
+
+kubectl apply -f deployment.yml
+kubectl get deploy
+kubectl get rs
+kubectl get pod
+kubectl describe deploy
+kubectl describe pod
+kubectl describe rs
