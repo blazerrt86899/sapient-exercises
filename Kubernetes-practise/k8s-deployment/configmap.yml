@@ -6,4 +6,7 @@ data:
   mysql_usermgmt.sql: |
     DROP DATABASE IF EXISTS webappdb;
     CREATE DATABASE webappdb;
+    USE webappdb;
+    CREATE TABLE webappdb.product(id INT, name VARCHAR(50), cost INT);
+    INSERT INTO webappdb.product(1,"Television",8000);
 #this config map you can compare the same as user data. 
