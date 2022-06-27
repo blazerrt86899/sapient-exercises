@@ -7,3 +7,4 @@ Till now we have covered:
 3. Terraform for Infrastructure Orchestration
 4. Ansible for Configuration Management
 5. Docker for Containerization of Application
+6. Kubernetes for Container Management and Scaling
