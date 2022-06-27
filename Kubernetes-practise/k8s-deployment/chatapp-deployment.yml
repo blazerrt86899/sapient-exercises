@@ -1,0 +1,20 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: chatapp-deployment 
+spec: 
+  replicas: 1
+  selector:
+    matchLabels:
+      app: chatapp
+  template:
+    metadata:
+      name: chatapp-pod 
+      labels: 
+        app: chatapp 
+    spec:
+      containers: 
+        - name: chatapp-container 
+          image: gopal1409/chatapp 
+          ports:
+           - containerPort: 8080
