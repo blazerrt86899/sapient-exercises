@@ -8,3 +8,15 @@ kubectl get pod
 kubectl describe deploy
 kubectl describe pod
 kubectl describe rs
+
+# To edit your deployment
+
+kubectl edit deploy myapp-deployment
+kubectl set image deploy/myapp-deployment myapp-container=piuma/phpsysinfo
+kubectl get deploy
+kubectl rollout status deploy/myapp-deployment
+kubectl get rs
+kubectl describe deploy myapp-deployment
+
+kubectl rollout history deploy myapp-deployment
+
