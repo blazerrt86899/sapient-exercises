@@ -8,3 +8,4 @@ Till now we have covered:
 4. Ansible for Configuration Management
 5. Docker for Containerization of Application
 6. Kubernetes for Container Management and Scaling
+7. Helm Charts for Kubernetes Packaging
